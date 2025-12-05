@@ -34,41 +34,84 @@ bash "${SCRIPT_DIR}/build-wireguard-go.sh"
 echo ""
 echo "==> 正在打包二进制文件..."
 
+# 检查 wireguard-tools 目录是否存在
+if [ ! -d "${BUILD_DIR}/wireguard-tools" ]; then
+    echo "错误: wireguard-tools 目录不存在"
+    echo "路径: ${BUILD_DIR}/wireguard-tools"
+    echo ""
+    echo "build 目录内容:"
+    ls -la "${BUILD_DIR}/"
+    exit 1
+fi
+
+echo "==> wireguard-tools 目录内容:"
+ls -la "${BUILD_DIR}/wireguard-tools/"
+
 # 查找并复制 wg 二进制文件
+echo ""
+echo "==> 搜索 wg 二进制文件..."
 WG_BIN=$(find "${BUILD_DIR}/wireguard-tools" -name "wg" -type f -perm +111 2>/dev/null | grep -v ".o" | head -1)
 if [ -n "$WG_BIN" ] && [ -f "$WG_BIN" ]; then
-    echo "    找到 wg: $WG_BIN"
+    echo "    ✅ 找到 wg: $WG_BIN"
     cp "$WG_BIN" "${PKG_ROOT}/usr/local/bin/"
 else
-    echo "错误: 找不到 wg 二进制文件"
+    echo "    ❌ 错误: 找不到 wg 二进制文件"
+    echo ""
+    echo "调试信息:"
     echo "搜索路径: ${BUILD_DIR}/wireguard-tools"
+    echo ""
+    echo "所有可执行文件:"
+    find "${BUILD_DIR}/wireguard-tools" -type f -perm +111 2>/dev/null || echo "未找到任何可执行文件"
+    echo ""
+    echo "所有名为 wg 的文件:"
+    find "${BUILD_DIR}/wireguard-tools" -name "wg" 2>/dev/null || echo "未找到名为 wg 的文件"
     exit 1
 fi
 
 # 查找并复制 wg-quick 脚本
+echo ""
+echo "==> 搜索 wg-quick 脚本..."
 WG_QUICK=$(find "${BUILD_DIR}/wireguard-tools" -name "darwin.bash" -o -name "wg-quick.bash" 2>/dev/null | head -1)
 if [ -z "$WG_QUICK" ]; then
     # 如果找不到，尝试查找任何 wg-quick 脚本
     WG_QUICK=$(find "${BUILD_DIR}/wireguard-tools" -path "*/wg-quick/*" -name "*.bash" 2>/dev/null | head -1)
 fi
 if [ -n "$WG_QUICK" ] && [ -f "$WG_QUICK" ]; then
-    echo "    找到 wg-quick: $WG_QUICK"
+    echo "    ✅ 找到 wg-quick: $WG_QUICK"
     cp "$WG_QUICK" "${PKG_ROOT}/usr/local/bin/wg-quick"
 else
-    echo "错误: 找不到 wg-quick 脚本"
+    echo "    ❌ 错误: 找不到 wg-quick 脚本"
+    echo ""
+    echo "调试信息:"
     echo "搜索路径: ${BUILD_DIR}/wireguard-tools"
+    echo ""
+    echo "所有 .bash 文件:"
+    find "${BUILD_DIR}/wireguard-tools" -name "*.bash" 2>/dev/null || echo "未找到 .bash 文件"
     exit 1
 fi
 
 # 复制 wireguard-go
+echo ""
+echo "==> 搜索 wireguard-go 二进制文件..."
 if [ -f "${BUILD_DIR}/wireguard-go/wireguard-go" ]; then
-    echo "    找到 wireguard-go: ${BUILD_DIR}/wireguard-go/wireguard-go"
+    echo "    ✅ 找到 wireguard-go: ${BUILD_DIR}/wireguard-go/wireguard-go"
     cp "${BUILD_DIR}/wireguard-go/wireguard-go" "${PKG_ROOT}/usr/local/bin/"
 else
-    echo "错误: 找不到 wireguard-go 二进制文件"
+    echo "    ❌ 错误: 找不到 wireguard-go 二进制文件"
+    echo ""
+    echo "调试信息:"
     echo "搜索路径: ${BUILD_DIR}/wireguard-go"
+    if [ -d "${BUILD_DIR}/wireguard-go" ]; then
+        echo "wireguard-go 目录内容:"
+        ls -la "${BUILD_DIR}/wireguard-go/"
+    else
+        echo "wireguard-go 目录不存在"
+    fi
     exit 1
 fi
+
+echo ""
+echo "==> ✅ 所有二进制文件已复制"
 
 # 设置权限
 chmod 755 "${PKG_ROOT}/usr/local/bin/wg"
