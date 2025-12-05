@@ -99,16 +99,15 @@ echo "==> wireguard-tools 构建完成"
 cd "${BUILD_DIR}/wireguard-tools"
 echo "==> 搜索生成的文件..."
 
-WG_BIN=$(find . -name "wg" -type f -perm +111 2>/dev/null | grep -v ".o" | head -1)
-if [ -n "$WG_BIN" ]; then
-    echo "    ✅ wg 二进制文件: ${BUILD_DIR}/wireguard-tools/${WG_BIN}"
+# 检查标准位置
+if [ -f "src/wg" ]; then
+    echo "    ✅ wg 二进制文件: ${BUILD_DIR}/wireguard-tools/src/wg"
 else
     echo "    ⚠️  警告: 未找到 wg 二进制文件"
 fi
 
-WG_QUICK=$(find . -path "*/wg-quick/darwin.bash" -o -path "*/wg-quick.bash" 2>/dev/null | head -1)
-if [ -n "$WG_QUICK" ]; then
-    echo "    ✅ wg-quick 脚本: ${BUILD_DIR}/wireguard-tools/${WG_QUICK}"
+if [ -f "src/wg-quick/darwin.bash" ]; then
+    echo "    ✅ wg-quick 脚本: ${BUILD_DIR}/wireguard-tools/src/wg-quick/darwin.bash"
 else
     echo "    ⚠️  警告: 未找到 wg-quick 脚本"
 fi

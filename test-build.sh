@@ -33,29 +33,31 @@ echo ""
 if [ -d "${BUILD_DIR}/wireguard-tools" ]; then
     echo "✅ wireguard-tools 目录存在"
     
-    # 查找 wg 二进制文件
-    WG_BIN=$(find "${BUILD_DIR}/wireguard-tools" -name "wg" -type f -perm +111 2>/dev/null | grep -v ".o" | head -1)
-    if [ -n "$WG_BIN" ]; then
+    # 查找 wg 二进制文件（检查标准位置）
+    if [ -f "${BUILD_DIR}/wireguard-tools/src/wg" ]; then
+        WG_BIN="${BUILD_DIR}/wireguard-tools/src/wg"
         echo "✅ 找到 wg 二进制文件: $WG_BIN"
         file "$WG_BIN"
+        ls -lh "$WG_BIN"
     else
         echo "❌ 未找到 wg 二进制文件"
         echo ""
-        echo "所有可执行文件:"
-        find "${BUILD_DIR}/wireguard-tools" -type f -perm +111 2>/dev/null
+        echo "所有名为 wg 的文件:"
+        find "${BUILD_DIR}/wireguard-tools" -name "wg" -type f 2>/dev/null
     fi
     
     echo ""
     
     # 查找 wg-quick 脚本
-    WG_QUICK=$(find "${BUILD_DIR}/wireguard-tools" -name "darwin.bash" -o -name "wg-quick.bash" 2>/dev/null | head -1)
-    if [ -n "$WG_QUICK" ]; then
+    if [ -f "${BUILD_DIR}/wireguard-tools/src/wg-quick/darwin.bash" ]; then
+        WG_QUICK="${BUILD_DIR}/wireguard-tools/src/wg-quick/darwin.bash"
         echo "✅ 找到 wg-quick 脚本: $WG_QUICK"
+        ls -lh "$WG_QUICK"
     else
         echo "❌ 未找到 wg-quick 脚本"
         echo ""
         echo "所有 .bash 文件:"
-        find "${BUILD_DIR}/wireguard-tools" -name "*.bash" 2>/dev/null
+        find "${BUILD_DIR}/wireguard-tools" -name "*.bash" 2>/dev/null | head -10
     fi
 else
     echo "❌ wireguard-tools 目录不存在"
