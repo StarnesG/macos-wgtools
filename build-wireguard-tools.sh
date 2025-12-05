@@ -28,14 +28,48 @@ if [ ! -d "wireguard-tools" ]; then
     mv wireguard-tools-* wireguard-tools
 fi
 
-# 构建
-cd wireguard-tools/src
+# 进入源代码目录
+cd wireguard-tools
+
 echo "==> 正在编译 wireguard-tools..."
 
-# 构建 wg 和 wg-quick
-make -C wg-quick
-make -C wg
+# wireguard-tools 的标准构建方式
+# 检查是否有 src 目录
+if [ -d "src" ]; then
+    cd src
+    # 尝试构建 wg 工具
+    if [ -f "Makefile" ]; then
+        make WITH_BASHCOMPLETION=no WITH_WGQUICK=no WITH_SYSTEMDUNITS=no
+    else
+        echo "错误: 找不到 Makefile"
+        echo "当前目录: $(pwd)"
+        echo "目录内容:"
+        ls -la
+        exit 1
+    fi
+else
+    # 如果没有 src 目录，尝试在根目录构建
+    if [ -f "Makefile" ]; then
+        make WITH_BASHCOMPLETION=no WITH_WGQUICK=no WITH_SYSTEMDUNITS=no
+    else
+        echo "错误: 找不到 Makefile"
+        echo "当前目录: $(pwd)"
+        echo "目录内容:"
+        ls -la
+        exit 1
+    fi
+fi
 
 echo "==> wireguard-tools 构建完成"
-echo "    wg 二进制文件: ${BUILD_DIR}/wireguard-tools/src/wg"
-echo "    wg-quick 脚本: ${BUILD_DIR}/wireguard-tools/src/wg-quick/darwin.bash"
+
+# 查找生成的文件
+cd "${BUILD_DIR}/wireguard-tools"
+WG_BIN=$(find . -name "wg" -type f -perm +111 | grep -v ".o" | head -1)
+if [ -n "$WG_BIN" ]; then
+    echo "    wg 二进制文件: ${BUILD_DIR}/wireguard-tools/${WG_BIN}"
+fi
+
+WG_QUICK=$(find . -path "*/wg-quick/darwin.bash" -o -path "*/wg-quick.bash" | head -1)
+if [ -n "$WG_QUICK" ]; then
+    echo "    wg-quick 脚本: ${BUILD_DIR}/wireguard-tools/${WG_QUICK}"
+fi

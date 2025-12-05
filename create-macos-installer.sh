@@ -33,9 +33,42 @@ bash "${SCRIPT_DIR}/build-wireguard-go.sh"
 # 复制二进制文件到包根目录
 echo ""
 echo "==> 正在打包二进制文件..."
-cp "${BUILD_DIR}/wireguard-tools/src/wg" "${PKG_ROOT}/usr/local/bin/"
-cp "${BUILD_DIR}/wireguard-tools/src/wg-quick/darwin.bash" "${PKG_ROOT}/usr/local/bin/wg-quick"
-cp "${BUILD_DIR}/wireguard-go/wireguard-go" "${PKG_ROOT}/usr/local/bin/"
+
+# 查找并复制 wg 二进制文件
+WG_BIN=$(find "${BUILD_DIR}/wireguard-tools" -name "wg" -type f -perm +111 2>/dev/null | grep -v ".o" | head -1)
+if [ -n "$WG_BIN" ] && [ -f "$WG_BIN" ]; then
+    echo "    找到 wg: $WG_BIN"
+    cp "$WG_BIN" "${PKG_ROOT}/usr/local/bin/"
+else
+    echo "错误: 找不到 wg 二进制文件"
+    echo "搜索路径: ${BUILD_DIR}/wireguard-tools"
+    exit 1
+fi
+
+# 查找并复制 wg-quick 脚本
+WG_QUICK=$(find "${BUILD_DIR}/wireguard-tools" -name "darwin.bash" -o -name "wg-quick.bash" 2>/dev/null | head -1)
+if [ -z "$WG_QUICK" ]; then
+    # 如果找不到，尝试查找任何 wg-quick 脚本
+    WG_QUICK=$(find "${BUILD_DIR}/wireguard-tools" -path "*/wg-quick/*" -name "*.bash" 2>/dev/null | head -1)
+fi
+if [ -n "$WG_QUICK" ] && [ -f "$WG_QUICK" ]; then
+    echo "    找到 wg-quick: $WG_QUICK"
+    cp "$WG_QUICK" "${PKG_ROOT}/usr/local/bin/wg-quick"
+else
+    echo "错误: 找不到 wg-quick 脚本"
+    echo "搜索路径: ${BUILD_DIR}/wireguard-tools"
+    exit 1
+fi
+
+# 复制 wireguard-go
+if [ -f "${BUILD_DIR}/wireguard-go/wireguard-go" ]; then
+    echo "    找到 wireguard-go: ${BUILD_DIR}/wireguard-go/wireguard-go"
+    cp "${BUILD_DIR}/wireguard-go/wireguard-go" "${PKG_ROOT}/usr/local/bin/"
+else
+    echo "错误: 找不到 wireguard-go 二进制文件"
+    echo "搜索路径: ${BUILD_DIR}/wireguard-go"
+    exit 1
+fi
 
 # 设置权限
 chmod 755 "${PKG_ROOT}/usr/local/bin/wg"
@@ -43,12 +76,15 @@ chmod 755 "${PKG_ROOT}/usr/local/bin/wg-quick"
 chmod 755 "${PKG_ROOT}/usr/local/bin/wireguard-go"
 
 # 复制手册页（如果可用）
-if [ -f "${BUILD_DIR}/wireguard-tools/src/man/wg.8" ]; then
-    cp "${BUILD_DIR}/wireguard-tools/src/man/wg.8" "${PKG_ROOT}/usr/local/share/man/man8/"
-fi
-if [ -f "${BUILD_DIR}/wireguard-tools/src/man/wg-quick.8" ]; then
-    cp "${BUILD_DIR}/wireguard-tools/src/man/wg-quick.8" "${PKG_ROOT}/usr/local/share/man/man8/"
-fi
+for manpage in wg.8 wg-quick.8; do
+    if [ -f "${BUILD_DIR}/wireguard-tools/src/man/${manpage}" ]; then
+        cp "${BUILD_DIR}/wireguard-tools/src/man/${manpage}" "${PKG_ROOT}/usr/local/share/man/man8/"
+    elif [ -f "${BUILD_DIR}/wireguard-tools/src/${manpage}" ]; then
+        cp "${BUILD_DIR}/wireguard-tools/src/${manpage}" "${PKG_ROOT}/usr/local/share/man/man8/"
+    elif [ -f "${BUILD_DIR}/wireguard-tools/man/${manpage}" ]; then
+        cp "${BUILD_DIR}/wireguard-tools/man/${manpage}" "${PKG_ROOT}/usr/local/share/man/man8/"
+    fi
+done
 
 # 创建安装后脚本
 cat > "${PKG_SCRIPTS}/postinstall" << 'EOF'

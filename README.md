@@ -124,10 +124,32 @@ brew install go
 xcode-select --install
 ```
 
+### 构建失败提示 "No targets specified and no makefile found"
+这通常是因为源代码结构问题。运行调试脚本检查：
+```bash
+./debug-build.sh
+```
+
+如果问题持续，尝试清理并重新构建：
+```bash
+rm -rf build/
+./create-macos-installer.sh
+```
+
 ### 安装时权限被拒绝
 使用 `sudo` 进行安装：
 ```bash
 sudo installer -pkg output/WireGuard-Tools-*-Installer.pkg -target /
+```
+
+### 调试构建问题
+使用调试脚本查看源代码结构：
+```bash
+# 先运行一次构建脚本下载源代码
+./build-wireguard-tools.sh
+
+# 然后运行调试脚本
+./debug-build.sh
 ```
 
 ## 分发
