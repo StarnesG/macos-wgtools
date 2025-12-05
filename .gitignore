@@ -1,0 +1,13 @@
+# Build artifacts
+build/
+package/
+output/
+
+# macOS
+.DS_Store
+*.pkg
+
+# Archives
+*.tar.xz
+*.tar.gz
+*.zip
