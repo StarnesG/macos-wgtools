@@ -21,7 +21,7 @@
 
 ### 快速开始
 
-运行主构建脚本：
+运行主构建脚本： 
 
 ```bash
 ./create-macos-installer.sh
@@ -75,6 +75,9 @@ sudo installer -pkg output/WireGuard-Tools-*-Installer.pkg -target /
 安装后：
 
 ```bash
+sudo mkdir -p /usr/local/etc/wireguard/
+sudo cp ./wg0.conf /usr/local/etc/wireguard/wg0.conf
+sudo chmod 600 /usr/local/etc/wireguard/wg0.conf
 # 查看 WireGuard 接口状态
 wg
 
